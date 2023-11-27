@@ -1,0 +1,206 @@
+// Incluido a biblioteca para uso do Display LCD
+#include <LiquidCrystal.h>
+
+// Inicializando os pinos para habilitar as funções do LCD
+const int RS = 12, EN = 11, D4 = 10, D5 = 9, D6 = 8, D7 = 7;
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+const int led1= 3; // Led Verde (Aceita)
+const int led2= 4; // Led Vermelho (Rejeita)
+
+// ----------------- Programa Inverso ---------------
+
+/*
+//Linguagem Turing Decidivel
+//Identificando palavras inversas, separadas por uma #
+//char w[]=".10#01."; //Palavra aceita. 
+char w[]=".1000#1001."; //Palavra rejeitada. 
+//Estado, simbolo, novo estado, novo simbolo, acao
+char programa[][5] = {	
+  	{'1','0','2','x','R'},
+    {'1','1','3','x','R'},
+    {'1','#','10','#','R'},
+    {'1','x','R','x','R'},
+    {'2','0','2','0','R'},
+  	{'2','1','2','1','R'},
+    {'2','#','4','#','R'},
+    {'3','0','3','0','R'},
+    {'3','1','3','1','R'},
+    {'3','#','6','#','R'},
+    {'4','0','4','0','R'},
+    {'4','1','4','1','R'},
+    {'4','x','5','x','L'},
+    {'4','.','5','.','L'},
+    {'5','0','8','x','L'},
+    {'5','1','R','x','L'},
+    {'5','x','R','x','R'},
+    {'6','0','6','0','R'},
+    {'6','1','6','1','R'},
+    {'6','x','7','x','L'},
+    {'6','.','7','.','L'},
+    {'7','0','R','x','L'},
+    {'7','1','8','x','L'},
+    {'7','1','R','x','R'},
+    {'8','x','8','x','L'},
+    {'8','0','8','0','L'},
+    {'8','1','8','1','L'},
+    {'8','#','9','#','L'},
+    {'9','0','9','0','L'},
+    {'9','1','9','1','L'},
+    {'9','x','1','x','R'},
+    {'10','x','10','x','R'},
+    {'10','1','R','1','R'},
+    {'10','0','R','0','R'},
+    {'10','.','A','.','R'},
+};
+*/
+// --------------------------------------------------
+
+// ----------------- Programa Igual -----------------
+
+//Linguagem Turing Decidivel
+//Identificando palavras iguais, separadas por uma #
+//char w[]=".10#10."; //Palavra aceita.
+char w[]=".0100#0100."; //Palavra rejeitada.
+//Estado, simbolo, novo estado, novo simbolo, acao
+char programa[][5] = {	
+  	{'1','0','2','x','R'},
+    {'1','1','3','x','R'},
+    {'1','#','8','#','R'},
+    {'1','x','R','x','R'},
+    {'2','0','2','0','R'},
+  	{'2','1','2','1','R'},
+    {'2','#','4','#','R'},
+    {'3','0','3','0','R'},
+    {'3','1','3','1','R'},
+    {'3','#','5','#','R'},
+    {'4','x','4','x','R'},
+    {'4','0','6','x','L'},
+    {'4','1','R','x','R'},
+    {'4','.','R','.','R'},
+	  {'5','x','5','x','R'},
+    {'5','0','R','x','R'},
+    {'5','.','R','.','R'},
+    {'5','1','6','x','L'},
+    {'6','0','6','0','L'},
+    {'6','1','6','1','L'},
+    {'6','x','6','x','L'},
+    {'6','#','7','#','L'},
+    {'7','0','7','0','L'},
+    {'7','1','7','1','L'},
+    {'7','x','1','x','R'},
+    {'8','x','8','x','R'},
+    {'8','1','R','1','R'},
+    {'8','0','R','0','R'},
+    {'8','.','A','.','R'},
+};
+
+
+// ---------------------------------------------------
+
+
+int TEMPO=300;
+
+int header=1;
+int coluna=0;
+int linha=0;
+
+int PROGRAMA_LINHAS = sizeof(programa);
+
+char estado=programa[0][0];
+char simbolo=w[header];
+char acao=programa[0][4];
+
+// --------------------------------------------------
+
+
+void setup() {
+  //Declaração de pinos
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  digitalWrite(led1,LOW);
+  digitalWrite(led2,LOW);
+
+  // Configura o LCD com os número de colunas e linhas
+  lcd.begin(16, 2); // 16 colunas e 2 linhas
+  lcd.clear();
+  // Posiciona o cursor do LCD
+  lcd.setCursor(0, 0); // (coluna 0, linha 0)
+  lcd.print("Maq. de Turing"); // Imprime mensagem
+  lcd.setCursor(0, 1);
+  lcd.print("L: w#w ou w#w'");
+  Serial.begin(9600); // Inicializando o monitor serial
+  delay(2000);
+  lcd.clear();
+  lcd.print(w);
+  delay(2000);
+}
+
+void loop() {
+  // Chama a função da maquina de turing
+  mt();
+
+}
+
+
+void mt(){
+   
+  while(estado=='A'){
+    Serial.println("ACEITA");
+  	lcd.setCursor(0,1); 
+  	lcd.print("ACEITA");
+    digitalWrite(led1,HIGH);
+    delay(TEMPO);
+  } 
+  while(estado=='R'){    
+    Serial.println("REJEITA");
+  	lcd.setCursor(0,1); 
+  	lcd.print("REJEITA");
+    digitalWrite(led2,HIGH);
+    delay(TEMPO);
+  
+  } 
+  
+  simbolo = w[header];
+    
+    //Antes
+  Serial.print(estado);
+  Serial.print(",");
+  Serial.print(simbolo);
+  Serial.print(",");
+  
+  int achou=0;
+  for(int i=0;i<PROGRAMA_LINHAS && !achou;i++){
+    if( (estado == programa[i][0]) &&
+        (simbolo == programa[i][1]) ) {
+      achou=1; 
+      estado = programa[i][2];
+      simbolo = programa[i][3]; 
+      acao = programa[i][4];
+      w[header]=simbolo;
+    }
+  }
+    
+    //Depois
+  Serial.print(estado);
+  Serial.print(",");
+  Serial.print(simbolo);
+  Serial.print(",");
+  Serial.println(acao);
+  
+  lcd.setCursor(header,0); 
+  lcd.print(simbolo);
+  
+  delay(TEMPO);
+  lcd.setCursor(header,1);
+  lcd.print(" ");           
+    
+  //Anda com o header
+  if(acao == 'R'){   
+    header += 1;          	   
+  } else {      
+    header -= 1;  
+  }
+  lcd.setCursor(header,1);
+  lcd.print("|");  
+    
+}//fim mt
